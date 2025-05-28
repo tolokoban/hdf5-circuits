@@ -7,7 +7,7 @@ const WebpackShellPluginNext = require("webpack-shell-plugin-next")
 const Webpack = require("webpack")
 const Package = require("./package.json")
 
-const USE_ESBUILD = true
+const USE_ESBUILD = false
 
 const config = (env) => {
     if (typeof Package.port !== "number") {

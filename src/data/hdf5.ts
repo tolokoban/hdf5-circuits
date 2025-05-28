@@ -1,56 +1,53 @@
 import { isFunction, isType } from "@tolokoban/type-guards"
 import * as hdf5Lib from "jsfive"
 
-interface HDF5Group {
+interface HDF5InternalGroup {
     name: string
     keys: string[]
     attrs: Record<string, string>
     value?: number[]
-    parent: HDF5Group
-    get(path: string): HDF5Group
+    parent: HDF5InternalGroup
+    get(path: string): HDF5InternalGroup
 }
 
-export class HDF5 {
-    private readonly root: HDF5Group
-
-    constructor(
-        data: ArrayBuffer,
-        public readonly filename: string
-    ) {
-        const hdf5 = new hdf5Lib.File(data, filename)
-        this.root = hdf5
+export class HDF5Group {
+    static fromArrayBuffer(data: ArrayBuffer, filename = "<ROOT>") {
+        const group = new hdf5Lib.File(data, filename)
+        return new HDF5Group(group, filename)
     }
 
-    keys(path = ""): string[] {
-        const { root: hdf5 } = this
-        if (path === "") return hdf5.keys
+    private constructor(
+        private readonly root: HDF5InternalGroup,
+        public readonly name: string
+    ) {}
 
-        const item = this.get(path)
+    get keys(): string[] {
+        const item = this.root
         const keys = isFunction(item.keys) ? item.keys() : item.keys
         return isType<string[]>(keys, ["array", "string"]) ? keys : []
     }
 
-    attrs(path = ""): Record<string, string> {
-        const { root } = this
-        if (path === "") return structuredClone(root.attrs)
-
-        const item = this.get(path)
-        console.log("🚀 [hdf5] path, item.value =", path, item.value) // @FIXME: Remove this line written on 2025-05-28 at 12:03
+    get attrs(): Record<string, string> {
+        const item = this.root
         return structuredClone(item.attrs ?? {})
     }
 
-    value(path = ""): number[] | undefined {
-        const { root } = this
-        if (path === "") return root.value
-
-        const item = this.get(path)
+    get value(): number[] | undefined {
+        const item = this.root
         return item.value
     }
 
-    private get(path: string): HDF5Group {
+    get(path: string): HDF5Group {
+        const fullPath = [this.name, path].join("/")
         const item = this.root.get(path)
-        if (!item) throw new Error(`Path "${path}" does not exist!`)
+        if (!item) {
+            throw new Error(`Path "${fullPath}" does not exist!`)
+        }
 
-        return item
+        return new HDF5Group(item, fullPath)
+    }
+
+    has(pathItem: string) {
+        return this.keys.includes(pathItem)
     }
 }

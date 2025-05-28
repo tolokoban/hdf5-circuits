@@ -1,9 +1,12 @@
 import { isString } from "@tolokoban/type-guards"
-import { HDF5 } from "./hdf5"
+import { HDF5Group } from "./hdf5"
 
-export async function loadHDF5(file: File | string): Promise<HDF5> {
+export async function loadHDF5(file: File | string): Promise<HDF5Group> {
     const data = await loadArrayBuffer(file)
-    const h5 = new HDF5(data, isString(file) ? "Example" : file.name)
+    const h5 = HDF5Group.fromArrayBuffer(
+        data,
+        isString(file) ? "Example" : file.name
+    )
     return h5
 }
 

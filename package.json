@@ -1,5 +1,5 @@
 {
-    "name": "...",
+    "name": "hdf5-circuits",
     "description": "...",
     "version": "0.1.0",
     "private": true,
@@ -9,6 +9,7 @@
     "homepage": "https://tolokoban.github.io/...",
     "dependencies": {
         "@tolokoban/react-state": "^0.4.0",
+        "@tolokoban/tgd": "^2.0.27",
         "@tolokoban/type-guards": "^0.8.3",
         "@tolokoban/ui": "^0.21.7",
         "jsfive": "^0.4.0",

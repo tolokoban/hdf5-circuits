@@ -165,7 +165,7 @@ class RouteContext {
         const newHash = this.extractHash(event.newURL)
         const absHash = this.ensureAbsoluteHash(newHash, oldHash)
         if (absHash !== newHash) {
-            history.replaceState({}, "", `#${absHash}`)
+            globalThis.history.replaceState({}, "", `#${absHash}`)
         }
         void this.setHash(absHash)
     }
