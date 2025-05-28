@@ -1,0 +1,14 @@
+.dataset {
+    margin: 0.25em 0;
+    padding: 0.25em;
+    border-radius: 0.25em;
+    background: var(--theme-color-neutral-4);
+    color: var(--theme-color-on-neutral-4);
+}
+
+.dataset > code {
+    display: inline-block;
+    font-size: 80%;
+    margin: 0.5em 0;
+    opacity: 0.7;
+}

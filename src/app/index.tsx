@@ -17,8 +17,9 @@ import { matchRoute, useRouteContext, ROUTES } from "./routes"
 import { RouteMatch, RoutePath } from "./types"
 
 import Layout0 from "./layout"
+import Layout1 from "./data/layout"
 const Page0 = React.lazy(() => import("./page"))
-const Page1 = React.lazy(() => import("./next/page"))
+const Page1 = React.lazy(() => import("./data/page"))
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export default function App({ lang }: { lang?: string }) {
@@ -26,10 +27,11 @@ export default function App({ lang }: { lang?: string }) {
     const fb = <div>Loading...</div>
     const ly0 = Layout0
     const pg0 = Page0
+    const ly1 = Layout1
     const pg1 = Page1
     return (
         <Route path="/" Page={pg0} Layout={ly0} fallback={fb} context={context}>
-            <Route path="/next" Page={pg1} fallback={fb} context={context}/>
+            <Route path="/data" Page={pg1} Layout={ly1} fallback={fb} context={context}/>
         </Route>
     )
 }

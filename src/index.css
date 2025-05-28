@@ -24,3 +24,18 @@ code {
     opacity: 0;
     transition: opacity 0.9s;
 }
+
+hr {
+    content: "";
+    width: 100%;
+    color: currentColor;
+    border: none;
+    height: 1px;
+    background: linear-gradient(
+        to left,
+        transparent,
+        currentColor,
+        currentColor,
+        transparent
+    );
+}

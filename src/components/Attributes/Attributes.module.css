@@ -1,0 +1,16 @@
+ul.attributes {
+    margin: 0.25em 0;
+    padding: 0.5em;
+    color: var(--theme-color-on-neutral-5);
+    background: var(--theme-color-neutral-5);
+    border-radius: 0.5em;
+}
+
+.attributes li::marker {
+    content: "";
+}
+
+.empty {
+    font-style: italic;
+    margin: 0.25em 0;
+}

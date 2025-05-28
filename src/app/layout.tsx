@@ -1,7 +1,5 @@
 import React from "react"
 
-import Background from "@/generated/background"
-
 import Styles from "./layout.module.css"
 
 export default function LayoutBackground({
@@ -9,10 +7,5 @@ export default function LayoutBackground({
 }: {
     children: React.ReactNode
 }) {
-    return (
-        <div className={Styles.Layoutbackground}>
-            <Background type="background" />
-            {children}
-        </div>
-    )
+    return <div className={Styles.Layoutbackground}>{children}</div>
 }

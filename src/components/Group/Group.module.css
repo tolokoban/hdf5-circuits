@@ -1,0 +1,11 @@
+.group > div.children {
+    margin-left: 1em;
+}
+
+.group summary {
+    border-radius: 0.25em;
+    color: var(--theme-color-on-primary-7);
+    background: var(--theme-color-primary-7);
+    margin: 1px 0;
+    padding: 0 1em;
+}
