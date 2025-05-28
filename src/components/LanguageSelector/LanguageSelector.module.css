@@ -1,0 +1,34 @@
+.languageselector {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  gap: 0.5em;
+  align-items: center;
+}
+
+.languageselector > button {
+  border: inherit;
+  font: inherit;
+  background: none;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  width: 2em;
+  height: 2em;
+  transform: scale(0.8);
+  filter: brightness(80%);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.languageselector > button.current {
+  transform: scale(1);
+  filter: brightness(110%);
+  cursor: default;
+}
+
+.languageselector > button > img {
+  width: 2em;
+  height: 2em;
+  margin: 0;
+}

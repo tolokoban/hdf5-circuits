@@ -1,0 +1,12 @@
+{
+    name: "React component with CSS module",
+    params: {
+        name: "Component's name",
+    },
+    vars: {
+        nameCamel: "camel($name)",
+        nameKebab: "kebab($name)",
+        namePascal: "pascal($name)",
+    },
+    open: "{{namePascal}}/{{namePascal}}.tsx",
+}

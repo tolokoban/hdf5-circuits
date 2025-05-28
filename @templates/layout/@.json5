@@ -1,0 +1,7 @@
+{
+    name: "Layout (Routes)",
+    params: {
+        name: "Layout's name",
+    },
+    open: "layout.tsx",
+}

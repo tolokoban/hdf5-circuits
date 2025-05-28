@@ -1,0 +1,4 @@
+{
+  name: "Local Translation",
+  open: "translation/en/index.tsx",
+}

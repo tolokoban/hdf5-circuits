@@ -1,0 +1,42 @@
+.responsiveimage {
+  position: relative;
+  padding: 0;
+  transition: opacity 0.2s;
+}
+
+.responsiveimage.hide {
+  opacity: 0;
+}
+
+.responsiveimage.show {
+  opacity: 1;
+}
+
+.responsiveimage > picture,
+.responsiveimage > picture > img {
+  object-fit: cover;
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: auto;
+  bottom: auto;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.responsiveimage.background {
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: auto;
+  bottom: auto;
+  width: 100%;
+  height: 100%;
+}
+
+.responsiveimage.normal > picture,
+.responsiveimage.normal > picture > img {
+  object-fit: contain;
+}

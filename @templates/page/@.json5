@@ -1,0 +1,12 @@
+{
+    name: "Page (Routes)",
+    params: {
+        name: "Page's name",
+    },
+    vars: {
+        nameCamel: "camel($name)",
+        nameKebab: "kebab($name)",
+        namePascal: "pascal($name)",
+    },
+    open: "page.tsx",
+}
