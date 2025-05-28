@@ -29,6 +29,10 @@ export class DatasetPoints {
         return this.data[this.actualIndex(index) + 3]
     }
 
+    setDiameter(index: number, value: number) {
+        this.data[this.actualIndex(index) + 3] = value
+    }
+
     /**
      * Return the center and the radius of a bounding sphere.
      * @returns [x, y, z, radius]

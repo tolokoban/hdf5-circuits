@@ -29,6 +29,31 @@ export class DatasetStructure {
         return this.data[this.actualIndex(index) + 2]
     }
 
+    /**
+     * @param type
+     * @returns A list of indexes of nodes of the same type
+     */
+    indexesOfSameType(type: number): number[] {
+        const indexes: number[] = []
+        for (let i = 0; i < this.count; i++) {
+            if (this.type(i) === type) indexes.push(i)
+        }
+        return indexes
+    }
+
+    /**
+     * @param type
+     * @returns A list of indexes of nodes with parents of the same type
+     */
+    indexesOfSameParentType(type: number): number[] {
+        const indexes: number[] = []
+        for (let i = 0; i < this.count; i++) {
+            const k = this.parent(i)
+            if (this.type(k) === type) indexes.push(i)
+        }
+        return indexes
+    }
+
     private actualIndex(index: number): number {
         if (index < 0 || index >= this.count) {
             throw new Error(

@@ -5,9 +5,7 @@ import {
     TgdCameraPerspective,
     TgdContext,
     TgdControllerCameraOrbit,
-    TgdPainterAxes,
     TgdPainterClear,
-    TgdPainterMesh,
     TgdPainterState,
     webglPresetDepth,
 } from "@tolokoban/tgd"
@@ -106,13 +104,6 @@ class PainterManager {
             })
         )
         context.paint()
-        console.log(
-            "🚀 [painter-manager] cx, cy, cz, radius =",
-            cx,
-            cy,
-            cz,
-            radius
-        ) // @FIXME: Remove this line written on 2025-05-28 at 15:10
     }
 }
 
