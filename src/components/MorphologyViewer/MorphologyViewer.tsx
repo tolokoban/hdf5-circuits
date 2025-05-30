@@ -6,17 +6,17 @@ import { usePainterManager } from "./painter/painter-manager"
 
 export interface MorphologyViewerProps {
     className?: string
-    group: HDF5Group | null
+    groups: HDF5Group[]
 }
 
 export default function MorphologyViewer({
     className,
-    group,
+    groups,
 }: MorphologyViewerProps) {
     const manager = usePainterManager()
     React.useEffect(() => {
-        manager.group = group
-    }, [group])
+        manager.groups = groups
+    }, [groups])
     const handleCanvasMount = (canvas: HTMLCanvasElement | null) => {
         manager.canvas = canvas
     }

@@ -1,20 +1,8 @@
 export class DatasetStructure {
-    // Neuron's types
-    static readonly SOMA = 1
-    static readonly AXON = 2
-    static readonly BASAL_DENDRITE = 3
-    static readonly APICAL_DENDRITE = 4
-    // Glia's types
-    static readonly GLIA_PERIVASCULAR_PROCESS = 2
-    static readonly GLIA_PROCESS = 3
-    // Dendritic spine's TypeScript
-    static readonly NECK = 2
-    static readonly HEAD = 3
-
-    public readonly count: number
+    public readonly length: number
 
     constructor(private readonly data: number[]) {
-        this.count = Math.floor(data.length / 3)
+        this.length = Math.floor(data.length / 3)
     }
 
     point(index: number) {
@@ -35,7 +23,7 @@ export class DatasetStructure {
      */
     indexesOfSameType(type: number): number[] {
         const indexes: number[] = []
-        for (let i = 0; i < this.count; i++) {
+        for (let i = 0; i < this.length; i++) {
             if (this.type(i) === type) indexes.push(i)
         }
         return indexes
@@ -47,7 +35,7 @@ export class DatasetStructure {
      */
     indexesOfSameParentType(type: number): number[] {
         const indexes: number[] = []
-        for (let i = 0; i < this.count; i++) {
+        for (let i = 0; i < this.length; i++) {
             const k = this.parent(i)
             if (this.type(k) === type) indexes.push(i)
         }
@@ -55,9 +43,9 @@ export class DatasetStructure {
     }
 
     private actualIndex(index: number): number {
-        if (index < 0 || index >= this.count) {
+        if (index < 0 || index >= this.length) {
             throw new Error(
-                `Index of a structure element must be between 0 and ${this.count - 1}!`
+                `Index of a structure element must be between 0 and ${this.length - 1}!`
             )
         }
 

@@ -14,20 +14,22 @@ export interface GroupProps {
 }
 
 export default function Group({ className, group }: GroupProps) {
-    const [groupToDisplay, setGroupToDisplay] = State.groupToDisplay.useState()
+    const [groupsToDisplay, setGroupsToDisplay] =
+        State.groupsToDisplay.useState()
     if (!group) return null
 
     const path = group.name
     const isMorphology = group.has("points") && group.has("structure")
+
     return (
         <details className={join(className, styles.group)} open={path === ""}>
             <summary>{path.split("/").at(-1) || <strong>ROOT</strong>}</summary>
             <div className={styles.children}>
                 {isMorphology && (
                     <ViewSwitch
-                        value={groupToDisplay?.name === group.name}
+                        value={isInGroupsToDisplay(group, groupsToDisplay)}
                         onChange={(value) =>
-                            setGroupToDisplay(value ? group : null)
+                            setGroupsToDisplay(value ? [group] : [])
                         }
                     >
                         Show this morphology
@@ -45,4 +47,14 @@ export default function Group({ className, group }: GroupProps) {
 
 function join(...classes: unknown[]): string {
     return classes.filter((cls) => typeof cls === "string").join(" ")
+}
+
+function isInGroupsToDisplay(
+    group: HDF5Group,
+    groupsToDisplay: HDF5Group[]
+): boolean {
+    if (groupsToDisplay.length !== 1) return false
+
+    const [groupToDisplay] = groupsToDisplay
+    return group.name === groupToDisplay.name
 }

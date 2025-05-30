@@ -1,10 +1,10 @@
 import { ArrayNumber4, TgdVec3 } from "@tolokoban/tgd"
 
 export class DatasetPoints {
-    public readonly count: number
+    public readonly length: number
 
     constructor(private readonly data: number[]) {
-        this.count = Math.floor(data.length / 4)
+        this.length = Math.floor(data.length / 4)
     }
 
     position(index: number): TgdVec3 {
@@ -33,6 +33,23 @@ export class DatasetPoints {
         this.data[this.actualIndex(index) + 3] = value
     }
 
+    forEach(
+        callback: (
+            x: number,
+            y: number,
+            z: number,
+            diameter: number
+        ) => boolean | void
+    ) {
+        for (let i = 0; i < this.length; i++) {
+            const x = this.x(i)
+            const y = this.y(i)
+            const z = this.z(i)
+            const d = this.diameter(i)
+            if (false === callback(x, y, z, d)) return
+        }
+    }
+
     /**
      * Return the center and the radius of a bounding sphere.
      * @returns [x, y, z, radius]
@@ -44,7 +61,7 @@ export class DatasetPoints {
         let maxX = Number.NEGATIVE_INFINITY
         let maxY = Number.NEGATIVE_INFINITY
         let maxZ = Number.NEGATIVE_INFINITY
-        for (let i = 0; i < this.count; i++) {
+        for (let i = 0; i < this.length; i++) {
             const x = this.x(i)
             const y = this.y(i)
             const z = this.z(i)
@@ -74,9 +91,9 @@ export class DatasetPoints {
     }
 
     private actualIndex(index: number): number {
-        if (index < 0 || index >= this.count) {
+        if (index < 0 || index >= this.length) {
             throw new Error(
-                `Index of a points element must be between 0 and ${this.count - 1}!`
+                `Index of a points element must be between 0 and ${this.length - 1}!`
             )
         }
 

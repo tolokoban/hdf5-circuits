@@ -5,7 +5,7 @@ import { ViewPanel, ViewStrip } from "@tolokoban/ui"
 
 export default function Page() {
     const data = State.data.useValue()
-    const groupToDisplay = State.groupToDisplay.useValue()
+    const groupsToDisplay = State.groupsToDisplay.useValue()
 
     if (!data) return null
     return (
@@ -24,7 +24,7 @@ export default function Page() {
                 </ViewPanel>
             </ViewStrip>
             <ViewPanel color="neutral-3" position="relative" fullsize>
-                <MorphologyViewer group={groupToDisplay} />
+                <MorphologyViewer groups={groupsToDisplay} />
             </ViewPanel>
         </ViewStrip>
     )

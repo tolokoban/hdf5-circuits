@@ -1,19 +1,22 @@
 import React from "react"
 import {
-    ArrayNumber3,
     tgdCalcDegToRad,
     TgdCameraPerspective,
     TgdContext,
     TgdControllerCameraOrbit,
+    TgdGeometry,
+    TgdGeometryBox,
     TgdPainterClear,
+    TgdPainterMesh,
     TgdPainterState,
+    TgdVec3,
     webglPresetDepth,
 } from "@tolokoban/tgd"
 
 import { HDF5Group } from "@/data/hdf5"
-import { DatasetPoints } from "@/morphology/dataset-points"
-import { DatasetStructure } from "@/morphology/dataset-structure"
 import { PainterMorphology } from "./morphology"
+import { Morphology, MorphologyLine, MorphologyNode } from "@/morphology"
+import { TgdPainterPointsCloud } from "@/painters/points-cloud"
 
 export function usePainterManager(): PainterManager {
     const ref = React.useRef<PainterManager | null>(null)
@@ -23,10 +26,8 @@ export function usePainterManager(): PainterManager {
 }
 class PainterManager {
     private _canvas: HTMLCanvasElement | null = null
-    private _group: HDF5Group | null = null
+    private _groups: HDF5Group[] = []
     private _context: TgdContext | null = null
-    private points: DatasetPoints | null = null
-    private structure: DatasetStructure | null = null
 
     get canvas() {
         return this._canvas
@@ -40,45 +41,44 @@ class PainterManager {
         this.initialize()
     }
 
-    get group() {
-        return this._group
+    get groups() {
+        return this._groups
     }
-    set group(value: HDF5Group | null) {
-        if (!value) {
-            this.cleanup()
-            return
+    set groups(groups: HDF5Group[]) {
+        this.cleanup()
+        for (const group of groups) {
+            if (group.has("points") && group.has("structure")) {
+                this._groups.push(group)
+            }
         }
-        if (value.has("points") && value.has("structure")) {
-            this.points = new DatasetPoints(value.get("points").value ?? [])
-            this.structure = new DatasetStructure(
-                value.get("structure").value ?? []
-            )
-        }
-        this._group = value
         this.initialize()
     }
 
     private cleanup() {
+        if (this._groups.length === 0) return
+
         if (this._context) this._context.destroy()
         this._canvas = null
-        this._group = null
+        this._groups = []
     }
 
     private initialize() {
-        const { canvas, group } = this
-        if (!canvas || !group) return
+        const { canvas, groups } = this
+        if (!canvas || groups.length === 0) return
 
         const context = new TgdContext(canvas, {
             antialias: true,
         })
-        const { points, structure } = this
-        if (!points || !structure) return
-
-        const [, , , radius] = points.computeBounds()
+        const morphologies = groups.map((group) => new Morphology(group))
+        console.log("🚀 [painter-manager] morphologies =", morphologies) // @FIXME: Remove this line written on 2025-05-30 at 11:45
+        const morphoPainters = morphologies.map(
+            (morpho) => new PainterMorphology(context, morpho)
+        )
+        const [center, radius] = getBoundingSphere(morphologies)
         if (context.camera instanceof TgdCameraPerspective) {
             context.camera.fovy = Math.PI / 2
         }
-        const [cx, cy, cz] = getSomeCenter(structure, points)
+        const [cx, cy, cz] = center
         context.camera.far = 10 * radius
         context.camera.near = 1
         context.camera.transfo.setPosition(cx, cy, cz)
@@ -91,6 +91,7 @@ class PainterManager {
             speedZoom: 25,
             inertiaOrbit: 1000,
         })
+        const children = morphoPainters
         context.add(
             new TgdPainterClear(context, {
                 color: [0, 0, 0, 1],
@@ -99,7 +100,9 @@ class PainterManager {
             new TgdPainterState(context, {
                 depth: webglPresetDepth.lessOrEqual,
                 children: [
-                    new PainterMorphology(context, { points, structure }),
+                    // makePointsClouds(context, morphologies[0].nodes),
+                    makePointsClouds(context, morphologies[0].nodes),
+                    ...children,
                 ],
             })
         )
@@ -107,23 +110,58 @@ class PainterManager {
     }
 }
 
-function getSomeCenter(
-    structure: DatasetStructure,
-    points: DatasetPoints
-): ArrayNumber3 {
-    let count = 0
-    let x = 0
-    let y = 0
-    let z = 0
-    for (let i = -0; i < structure.count; i++) {
-        if (structure.type(i) !== DatasetStructure.SOMA) continue
-
-        const k = structure.point(i)
-        x += points.x(k)
-        y += points.y(k)
-        z += points.z(k)
-        count++
+function getBoundingSphere(
+    morphologies: Morphology[]
+): [center: TgdVec3, radius: number] {
+    const center = TgdVec3.center(
+        morphologies.map((morpho) => morpho.somaCenter)
+    )
+    let radius = 0
+    for (const morpho of morphologies) {
+        radius = Math.max(
+            radius,
+            morpho.boundingSphereRadius +
+                TgdVec3.distance(center, morpho.somaCenter)
+        )
     }
-    const coeff = 1 / count
-    return [x * coeff, y * coeff, z * coeff]
+    return [center, radius]
+}
+
+function makePointsClouds(
+    context: TgdContext,
+    nodes: readonly MorphologyNode[]
+): TgdPainterPointsCloud {
+    const point: number[] = []
+    const uv: number[] = []
+    for (const node of nodes) {
+        const { x, y, z } = node.center
+        const r = node.radius
+        point.push(x, y, z, r)
+        const u = (node.type - 0.5) / 4
+        uv.push(u, u)
+    }
+    return new TgdPainterPointsCloud(context, {
+        dataPoint: new Float32Array(point),
+        dataUV: new Float32Array(uv),
+    })
+}
+
+function makePointsCloudsFromLines(
+    context: TgdContext,
+    lines: readonly MorphologyLine[]
+): TgdPainterPointsCloud {
+    const point: number[] = []
+    const uv: number[] = []
+    for (const { node2 } of lines) {
+        const node = node2
+        const { x, y, z } = node.center
+        const r = node.radius
+        point.push(x, y, z, r)
+        const u = (node.type - 0.5) / 4
+        uv.push(u, u)
+    }
+    return new TgdPainterPointsCloud(context, {
+        dataPoint: new Float32Array(point),
+        dataUV: new Float32Array(uv),
+    })
 }
