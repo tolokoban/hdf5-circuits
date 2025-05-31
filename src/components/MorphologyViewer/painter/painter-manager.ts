@@ -2,6 +2,7 @@ import React from "react"
 import {
     tgdCalcDegToRad,
     TgdCameraPerspective,
+    tgdCanvasCreateFill,
     TgdContext,
     TgdControllerCameraOrbit,
     TgdGeometry,
@@ -9,6 +10,7 @@ import {
     TgdPainterClear,
     TgdPainterMesh,
     TgdPainterState,
+    TgdTexture2D,
     TgdVec3,
     webglPresetDepth,
 } from "@tolokoban/tgd"
@@ -17,6 +19,7 @@ import { HDF5Group } from "@/data/hdf5"
 import { PainterMorphology } from "./morphology"
 import { Morphology, MorphologyLine, MorphologyNode } from "@/morphology"
 import { TgdPainterPointsCloud } from "@/painters/points-cloud"
+import { TgdPainterLines } from "@/painters/lines"
 
 export function usePainterManager(): PainterManager {
     const ref = React.useRef<PainterManager | null>(null)
@@ -88,7 +91,7 @@ class PainterManager {
                 maxLat: tgdCalcDegToRad(60),
                 minLat: tgdCalcDegToRad(-60),
             },
-            speedZoom: 25,
+            speedZoom: 50,
             inertiaOrbit: 1000,
         })
         const children = morphoPainters
@@ -100,9 +103,9 @@ class PainterManager {
             new TgdPainterState(context, {
                 depth: webglPresetDepth.lessOrEqual,
                 children: [
-                    // makePointsClouds(context, morphologies[0].nodes),
                     makePointsClouds(context, morphologies[0].nodes),
-                    ...children,
+                    makeLines(context, morphologies[0].lines),
+                    // ...children,
                 ],
             })
         )
@@ -143,6 +146,10 @@ function makePointsClouds(
     return new TgdPainterPointsCloud(context, {
         dataPoint: new Float32Array(point),
         dataUV: new Float32Array(uv),
+        minSizeInPixels: 5,
+        texture: new TgdTexture2D(context).loadBitmap(
+            tgdCanvasCreateFill(1, 1, "#008")
+        ),
     })
 }
 
@@ -150,18 +157,41 @@ function makePointsCloudsFromLines(
     context: TgdContext,
     lines: readonly MorphologyLine[]
 ): TgdPainterPointsCloud {
-    const point: number[] = []
-    const uv: number[] = []
-    for (const { node2 } of lines) {
-        const node = node2
-        const { x, y, z } = node.center
-        const r = node.radius
-        point.push(x, y, z, r)
-        const u = (node.type - 0.5) / 4
-        uv.push(u, u)
+    const points: number[] = []
+    const uvs: number[] = []
+    for (const { node1, node2 } of lines) {
+        for (const node of [node1, node2]) {
+            const { x, y, z } = node.center
+            const r = node.radius
+            points.push(x, y, z, r)
+            const u = (node.type - 0.5) / 4
+            uvs.push(u, u)
+        }
     }
     return new TgdPainterPointsCloud(context, {
-        dataPoint: new Float32Array(point),
-        dataUV: new Float32Array(uv),
+        dataPoint: new Float32Array(points),
+        dataUV: new Float32Array(uvs),
+        minSizeInPixels: 5,
+        texture: new TgdTexture2D(context).loadBitmap(
+            tgdCanvasCreateFill(1, 1, "#080")
+        ),
     })
+}
+
+function makeLines(
+    context: TgdContext,
+    lines: readonly MorphologyLine[]
+): TgdPainterLines {
+    const points: number[] = []
+    for (const { node1, node2 } of lines) {
+        for (const node of [node1, node2]) {
+            const { x, y, z } = node.center
+            points.push(x, y, z, 0)
+        }
+    }
+    const painter = new TgdPainterLines(context, {
+        dataPoint: new Float32Array(points),
+    })
+    painter.texture.loadBitmap(tgdCanvasCreateFill(1, 1, "#fff"))
+    return painter
 }
