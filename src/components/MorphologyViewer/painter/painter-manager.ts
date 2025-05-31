@@ -73,7 +73,6 @@ class PainterManager {
             antialias: true,
         })
         const morphologies = groups.map((group) => new Morphology(group))
-        console.log("🚀 [painter-manager] morphologies =", morphologies) // @FIXME: Remove this line written on 2025-05-30 at 11:45
         const morphoPainters = morphologies.map(
             (morpho) => new PainterMorphology(context, morpho)
         )
@@ -103,8 +102,8 @@ class PainterManager {
             new TgdPainterState(context, {
                 depth: webglPresetDepth.lessOrEqual,
                 children: [
-                    makePointsClouds(context, morphologies[0].nodes),
-                    makeLines(context, morphologies[0].lines),
+                    makePointsClouds(context, morphologies),
+                    makeLines(context, morphologies),
                     // ...children,
                 ],
             })
@@ -132,66 +131,45 @@ function getBoundingSphere(
 
 function makePointsClouds(
     context: TgdContext,
-    nodes: readonly MorphologyNode[]
+    morphologies: readonly Morphology[]
 ): TgdPainterPointsCloud {
     const point: number[] = []
     const uv: number[] = []
-    for (const node of nodes) {
-        const { x, y, z } = node.center
-        const r = node.radius
-        point.push(x, y, z, r)
-        const u = (node.type - 0.5) / 4
-        uv.push(u, u)
+    for (let i = 0; i < morphologies.length; i++) {
+        const nodes = morphologies[i].nodes
+        for (const node of nodes) {
+            const { x, y, z } = node.center
+            const r = node.radius
+            point.push(x, y, z, r)
+            const u = (i + 0.5) / morphologies.length
+            uv.push(u, u)
+        }
     }
     return new TgdPainterPointsCloud(context, {
         dataPoint: new Float32Array(point),
         dataUV: new Float32Array(uv),
         minSizeInPixels: 5,
-        texture: new TgdTexture2D(context).loadBitmap(
-            tgdCanvasCreateFill(1, 1, "#008")
-        ),
-    })
-}
-
-function makePointsCloudsFromLines(
-    context: TgdContext,
-    lines: readonly MorphologyLine[]
-): TgdPainterPointsCloud {
-    const points: number[] = []
-    const uvs: number[] = []
-    for (const { node1, node2 } of lines) {
-        for (const node of [node1, node2]) {
-            const { x, y, z } = node.center
-            const r = node.radius
-            points.push(x, y, z, r)
-            const u = (node.type - 0.5) / 4
-            uvs.push(u, u)
-        }
-    }
-    return new TgdPainterPointsCloud(context, {
-        dataPoint: new Float32Array(points),
-        dataUV: new Float32Array(uvs),
-        minSizeInPixels: 5,
-        texture: new TgdTexture2D(context).loadBitmap(
-            tgdCanvasCreateFill(1, 1, "#080")
-        ),
     })
 }
 
 function makeLines(
     context: TgdContext,
-    lines: readonly MorphologyLine[]
+    morphologies: readonly Morphology[]
 ): TgdPainterLines {
     const points: number[] = []
-    for (const { node1, node2 } of lines) {
-        for (const node of [node1, node2]) {
-            const { x, y, z } = node.center
-            points.push(x, y, z, 0)
+    let index = 0
+    for (const { lines } of morphologies) {
+        const color = (index + 0.5) / morphologies.length
+        index++
+        for (const { node1, node2 } of lines) {
+            for (const node of [node1, node2]) {
+                const { x, y, z } = node.center
+                points.push(x, y, z, color)
+            }
         }
     }
     const painter = new TgdPainterLines(context, {
         dataPoint: new Float32Array(points),
     })
-    painter.texture.loadBitmap(tgdCanvasCreateFill(1, 1, "#fff"))
     return painter
 }

@@ -1,3 +1,4 @@
+import { getHueWheel } from "@/utils/colors"
 import {
     tgdCanvasCreateGradientHorizontal,
     TgdContext,
@@ -52,7 +53,7 @@ export class TgdPainterLines extends TgdPainter {
             this.textureMustBeDeleted = false
         } else {
             this.texture = new TgdTexture2D(context).loadBitmap(
-                tgdCanvasCreateGradientHorizontal(16, ["#0f0", "#ff0", "#f00"])
+                tgdCanvasCreateGradientHorizontal(360, getHueWheel())
             )
             this.textureMustBeDeleted = true
         }
