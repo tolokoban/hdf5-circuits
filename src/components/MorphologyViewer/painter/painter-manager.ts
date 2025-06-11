@@ -5,21 +5,20 @@ import {
     tgdCanvasCreateFill,
     TgdContext,
     TgdControllerCameraOrbit,
-    TgdGeometry,
-    TgdGeometryBox,
+    TgdPainter,
     TgdPainterClear,
-    TgdPainterMesh,
     TgdPainterState,
-    TgdTexture2D,
     TgdVec3,
     webglPresetDepth,
 } from "@tolokoban/tgd"
 
 import { HDF5Group } from "@/data/hdf5"
 import { PainterMorphology } from "./morphology"
-import { Morphology, MorphologyLine, MorphologyNode } from "@/morphology"
+import { Morphology } from "@/morphology"
 import { TgdPainterPointsCloud } from "@/painters/points-cloud"
 import { TgdPainterLines } from "@/painters/lines"
+import AtomicState from "@tolokoban/react-state"
+import { PainterSoma } from "./soma"
 
 export function usePainterManager(): PainterManager {
     const ref = React.useRef<PainterManager | null>(null)
@@ -27,10 +26,17 @@ export function usePainterManager(): PainterManager {
 
     return ref.current as PainterManager
 }
+
 class PainterManager {
     private _canvas: HTMLCanvasElement | null = null
     private _groups: HDF5Group[] = []
     private _context: TgdContext | null = null
+    private structurePainter: TgdPainter | null = null
+    private pointsPainter: TgdPainter | null = null
+    private somaPainter: TgdPainter | null = null
+
+    public readonly showPoints = new AtomicState(false)
+    public readonly showStructure = new AtomicState(true)
 
     get canvas() {
         return this._canvas
@@ -57,12 +63,34 @@ class PainterManager {
         this.initialize()
     }
 
+    /**
+     * Update visibility of painters.
+     * Most of the time this depends on user clicks.
+     */
+    private readonly updateVisibility = () => {
+        const { pointsPainter, structurePainter } = this
+        if (pointsPainter) pointsPainter.active = this.showPoints.value
+        if (structurePainter) structurePainter.active = this.showStructure.value
+        this._context?.paint()
+        console.log(
+            "🚀 [painter-manager] pointsPainter.active =",
+            pointsPainter?.active
+        ) // @FIXME: Remove this line written on 2025-06-02 at 15:21
+        console.log(
+            "🚀 [painter-manager] structurePainter.active =",
+            structurePainter?.active
+        ) // @FIXME: Remove this line written on 2025-06-02 at 15:22
+    }
+
     private cleanup() {
         if (this._groups.length === 0) return
 
-        if (this._context) this._context.destroy()
+        if (this._context) this._context.delete()
         this._canvas = null
         this._groups = []
+        this.showPoints.removeListener(this.updateVisibility)
+        this.showStructure.removeListener(this.updateVisibility)
+        console.log("REMOVE listeners")
     }
 
     private initialize() {
@@ -74,7 +102,10 @@ class PainterManager {
         })
         const morphologies = groups.map((group) => new Morphology(group))
         const morphoPainters = morphologies.map(
-            (morpho) => new PainterMorphology(context, morpho)
+            (morpho, index) =>
+                new PainterMorphology(context, morpho, {
+                    color: (index + 0.5) / morphologies.length,
+                })
         )
         const [center, radius] = getBoundingSphere(morphologies)
         if (context.camera instanceof TgdCameraPerspective) {
@@ -93,7 +124,12 @@ class PainterManager {
             speedZoom: 50,
             inertiaOrbit: 1000,
         })
-        const children = morphoPainters
+        const somaPainter = new PainterSoma(context, morphologies)
+        const children = [...morphoPainters, somaPainter]
+        const structurePainter = makePointsClouds(context, morphologies)
+        this.structurePainter = structurePainter
+        const pointsPainter = makeLines(context, morphologies)
+        this.pointsPainter = pointsPainter
         context.add(
             new TgdPainterClear(context, {
                 color: [0, 0, 0, 1],
@@ -101,14 +137,14 @@ class PainterManager {
             }),
             new TgdPainterState(context, {
                 depth: webglPresetDepth.lessOrEqual,
-                children: [
-                    makePointsClouds(context, morphologies),
-                    makeLines(context, morphologies),
-                    // ...children,
-                ],
+                children,
+                // children: [structurePainter, pointsPainter], //, ...children],
             })
         )
         context.paint()
+        console.log("ADD listeners")
+        this.showPoints.addListener(this.updateVisibility)
+        this.showStructure.addListener(this.updateVisibility)
     }
 }
 
@@ -158,18 +194,27 @@ function makeLines(
 ): TgdPainterLines {
     const points: number[] = []
     let index = 0
-    for (const { lines } of morphologies) {
+    for (const { sections } of morphologies) {
         const color = (index + 0.5) / morphologies.length
         index++
-        for (const { node1, node2 } of lines) {
-            for (const node of [node1, node2]) {
-                const { x, y, z } = node.center
-                points.push(x, y, z, color)
+        for (const section of sections) {
+            let prvNode = null
+            for (const curNode of section.nodes) {
+                if (prvNode) {
+                    for (const node of [prvNode, curNode]) {
+                        const { x, y, z } = node.center
+                        points.push(x, y, z, color)
+                    }
+                }
+                prvNode = curNode
             }
         }
     }
     const painter = new TgdPainterLines(context, {
         dataPoint: new Float32Array(points),
     })
+    if (morphologies.length === 1) {
+        painter.texture.loadBitmap(tgdCanvasCreateFill(1, 1, "#fa0"))
+    }
     return painter
 }

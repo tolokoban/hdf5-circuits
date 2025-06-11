@@ -7,13 +7,12 @@ export interface MorphologyNode {
     center: TgdVec3
     radius: number
     type: number
-    lines: MorphologyLine[]
 }
 
-export interface MorphologyLine {
-    node1: MorphologyNode
-    node2: MorphologyNode
-    length: number
+export interface MorphologySection {
+    parent: number
+    nodes: MorphologyNode[]
+    type: number
 }
 
 export class Morphology {
@@ -37,10 +36,10 @@ export class Morphology {
     }
 
     private readonly _nodes: MorphologyNode[] = []
-    private readonly _somaNodes: MorphologyNode[] = []
-    private readonly _lines: MorphologyLine[] = []
+    private readonly _somaNodes: MorphologyNode[]
+    private readonly _sections: MorphologySection[] = []
 
-    constructor(group: HDF5Group) {
+    constructor(group: HDF5Group, mode: "full" | "tree" = "full") {
         const points = new DatasetPoints(group.get("points").value ?? [])
         const structure = new DatasetStructure(
             group.get("structure").value ?? []
@@ -52,33 +51,45 @@ export class Morphology {
                 center: new TgdVec3(x, y, z),
                 radius: d * 0.5,
                 type: 0,
-                lines: [],
             })
         })
         const somaCenter = new TgdVec3()
         this.somaCenter = somaCenter
+        let somaPointsCount = 0
+        const somaNodes: MorphologyNode[] = []
         for (let i = 0; i < structure.length; i++) {
-            const type = structure.type(i)
+            const type = structure.getSectionType(i)
             if (type === Morphology.SOMA) {
                 const soma = nodes[i]
                 soma.type = type
-                somaCenter.add(soma.center)
-                this._somaNodes.push(soma)
-            } else {
-                const node2 = nodes[structure.point(i)]
-                node2.type = type
-                const node1 = nodes[structure.point(structure.parent(i))]
-                const line: MorphologyLine = {
-                    node1,
-                    node2,
-                    length: TgdVec3.distance(node1.center, node2.center),
+                const somaIndexes = structure.getSectionPointsIndexes(
+                    i,
+                    points.length
+                )
+                for (const somaIndex of somaIndexes) {
+                    const somaNode = nodes[somaIndex]
+                    somaNodes.push(somaNode)
+                    somaCenter.add(somaNode.center)
+                    somaPointsCount++
                 }
-                this._lines.push(line)
-                node1.lines.push(line)
-                node2.lines.push(line)
+            } else {
+                const pointsIndexes = structure.getSectionPointsIndexes(
+                    i,
+                    nodes.length
+                )
+                if (pointsIndexes.length === 0) {
+                    console.log("NO POINT HERE!")
+                }
+                const section: MorphologySection = {
+                    nodes: pointsIndexes.map((index) => nodes[index]),
+                    type: nodes[pointsIndexes[0]].type,
+                    parent: structure.getSectionParentIndex(i),
+                }
+                this._sections.push(section)
             }
         }
-        somaCenter.scale(1 / somaCenter.length)
+        this._somaNodes = somaNodes
+        somaCenter.scale(1 / Math.max(1, somaPointsCount))
         let boundingSphereRadius = 0
         for (const node of nodes) {
             boundingSphereRadius = Math.max(
@@ -95,7 +106,7 @@ export class Morphology {
     public get somaNodes(): Readonly<MorphologyNode[]> {
         return this._somaNodes
     }
-    public get lines(): Readonly<MorphologyLine[]> {
-        return this._lines
+    public get sections(): Readonly<MorphologySection[]> {
+        return this._sections
     }
 }

@@ -14,3 +14,22 @@
     width: 100%;
     height: 100%;
 }
+
+.morphologyViewer > footer {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    padding: 0.25em 1em;
+    display: flex;
+    flex-wrap: nowrap;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 1em;
+    color: #fff;
+}
+
+.morphologyViewer > footer > button {
+    position: relative;
+}

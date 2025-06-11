@@ -3,6 +3,7 @@ import React from "react"
 import styles from "./MorphologyViewer.module.css"
 import { HDF5Group } from "@/data/hdf5"
 import { usePainterManager } from "./painter/painter-manager"
+import { ViewSwitch } from "@tolokoban/ui"
 
 export interface MorphologyViewerProps {
     className?: string
@@ -14,6 +15,8 @@ export default function MorphologyViewer({
     groups,
 }: MorphologyViewerProps) {
     const manager = usePainterManager()
+    const [showPoints, setShowPoints] = manager.showPoints.useState()
+    const [showStructure, setShowStructure] = manager.showStructure.useState()
     React.useEffect(() => {
         manager.groups = groups
     }, [groups])
@@ -24,6 +27,14 @@ export default function MorphologyViewer({
     return (
         <div className={join(className, styles.morphologyViewer)}>
             <canvas ref={handleCanvasMount}></canvas>
+            <footer>
+                <ViewSwitch value={showPoints} onChange={setShowPoints}>
+                    Points
+                </ViewSwitch>
+                <ViewSwitch value={showStructure} onChange={setShowStructure}>
+                    Structure
+                </ViewSwitch>
+            </footer>
         </div>
     )
 }

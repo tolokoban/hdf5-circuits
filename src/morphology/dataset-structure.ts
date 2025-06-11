@@ -5,15 +5,41 @@ export class DatasetStructure {
         this.length = Math.floor(data.length / 3)
     }
 
-    point(index: number) {
+    /**
+     * Index of the first point of the section at `index`.
+     */
+    getFirstPointIndex(index: number) {
         return this.data[this.actualIndex(index)]
     }
 
-    type(index: number) {
+    /**
+     * @returns An array of indexes of all the points of the section at `index`.
+     */
+    getSectionPointsIndexes(index: number, pointsCount: number): number[] {
+        const points: number[] = []
+        for (
+            let pointer = this.getFirstPointIndex(index);
+            pointer <
+            (index < this.length - 1
+                ? this.getFirstPointIndex(index + 1)
+                : pointsCount);
+            pointer++
+        ) {
+            points.push(pointer)
+        }
+        return points
+    }
+
+    getSectionType(index: number) {
         return this.data[this.actualIndex(index) + 1]
     }
 
-    parent(index: number) {
+    /**
+     *
+     * @param index
+     * @returns
+     */
+    getSectionParentIndex(index: number) {
         return this.data[this.actualIndex(index) + 2]
     }
 
@@ -21,10 +47,10 @@ export class DatasetStructure {
      * @param type
      * @returns A list of indexes of nodes of the same type
      */
-    indexesOfSameType(type: number): number[] {
+    getSectionIndexesOfSameType(type: number): number[] {
         const indexes: number[] = []
         for (let i = 0; i < this.length; i++) {
-            if (this.type(i) === type) indexes.push(i)
+            if (this.getSectionType(i) === type) indexes.push(i)
         }
         return indexes
     }
@@ -36,8 +62,8 @@ export class DatasetStructure {
     indexesOfSameParentType(type: number): number[] {
         const indexes: number[] = []
         for (let i = 0; i < this.length; i++) {
-            const k = this.parent(i)
-            if (this.type(k) === type) indexes.push(i)
+            const k = this.getSectionParentIndex(i)
+            if (this.getSectionType(k) === type) indexes.push(i)
         }
         return indexes
     }

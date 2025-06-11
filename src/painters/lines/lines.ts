@@ -53,7 +53,7 @@ export class TgdPainterLines extends TgdPainter {
             this.textureMustBeDeleted = false
         } else {
             this.texture = new TgdTexture2D(context).loadBitmap(
-                tgdCanvasCreateGradientHorizontal(360, getHueWheel())
+                tgdCanvasCreateGradientHorizontal(360, getHueWheel(90))
             )
             this.textureMustBeDeleted = true
         }
